@@ -10,14 +10,21 @@ defmodule LiveViewStudioWeb.BoatsLive do
         boats: Boats.list_boats()
       )
 
-    {:ok, socket}
+    {:ok, socket, temporary_assigns: [boats: []]}
   end
 
   def render(assigns) do
     ~H"""
     <h1>Daily Boat Rentals</h1>
+    <.promo expiration={2}>
+      Save 25% on rentals
+     <:legal>
+     <Heroicons.exclamation_circle />
+      limited to 1 per party
+     </:legal>
+    </.promo>
     <div id="boats">
-      <form>
+      <form phx-change="filter">
         <div class="filters">
           <select name="type">
             <%= Phoenix.HTML.Form.options_for_select(
@@ -59,7 +66,35 @@ defmodule LiveViewStudioWeb.BoatsLive do
         </div>
       </div>
     </div>
+    <.promo expiration={1}>
+     Hurry, only 3 slots left!
+     <:legal>
+     Excluding weekends
+     </:legal>
+    </.promo>
+
     """
+  end
+  def promo(assigns) do
+    ~H"""
+    <div class="promo">
+      <div class="deal">
+      <%= render_slot(@inner_block) %>
+      </div>
+      <div class="expiration">
+      Deal expires in <%= @expiration %>
+      </div>
+      <div class="legal">
+        <%= render_slot(@legal) %>
+      </div>
+    </div>
+    """
+  end
+  def handle_event("filter", %{"type"=>type, "prices"=>prices}, socket) do
+    filter = %{type: type, prices: prices}
+    boats = Boats.list_boats(filter)
+
+    {:noreply, assign(socket, boats: boats, filter: filter )}
   end
 
   defp type_options do
