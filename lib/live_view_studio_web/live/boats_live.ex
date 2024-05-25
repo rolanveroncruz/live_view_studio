@@ -1,6 +1,7 @@
 defmodule LiveViewStudioWeb.BoatsLive do
   use LiveViewStudioWeb, :live_view
 
+  alias LiveViewStudioWeb.CustomComponents
   alias LiveViewStudio.Boats
 
   def mount(_params, _session, socket) do
@@ -16,14 +17,60 @@ defmodule LiveViewStudioWeb.BoatsLive do
   def render(assigns) do
     ~H"""
     <h1>Daily Boat Rentals</h1>
-    <.promo expiration={2}>
+    <CustomComponents.promo expiration={2}>
       Save 25% on rentals
      <:legal>
      <Heroicons.exclamation_circle />
       limited to 1 per party
      </:legal>
-    </.promo>
+    </CustomComponents.promo>
+
+
     <div id="boats">
+      <.filter_form filter={@filter} />
+      <div class="boats">
+
+        <.boat :for={boat<-@boats} boat={boat} />
+
+      </div>
+    </div>
+    <CustomComponents.promo expiration={1}>
+     Hurry, only 3 slots left!
+     <:legal>
+     Excluding weekends
+     </:legal>
+    </CustomComponents.promo>
+
+    """
+  end
+
+  attr :boat, LiveViewStudio.Boats.Boat, required: true
+
+  def boat(assigns) do
+    ~H"""
+        <div class="boat">
+          <img src={@boat.image} />
+          <div class="content">
+            <div class="model">
+              <%= @boat.model %>
+            </div>
+            <div class="details">
+              <span class="price">
+                <%= @boat.price %>
+              </span>
+              <span class="type">
+                <%= @boat.type %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+    """
+
+  end
+
+  def filter_form(assigns) do
+    ~H"""
       <form phx-change="filter">
         <div class="filters">
           <select name="type">
@@ -47,48 +94,9 @@ defmodule LiveViewStudioWeb.BoatsLive do
           </div>
         </div>
       </form>
-      <div class="boats">
-        <div :for={boat <- @boats} class="boat">
-          <img src={boat.image} />
-          <div class="content">
-            <div class="model">
-              <%= boat.model %>
-            </div>
-            <div class="details">
-              <span class="price">
-                <%= boat.price %>
-              </span>
-              <span class="type">
-                <%= boat.type %>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <.promo expiration={1}>
-     Hurry, only 3 slots left!
-     <:legal>
-     Excluding weekends
-     </:legal>
-    </.promo>
 
     """
-  end
-  def promo(assigns) do
-    ~H"""
-    <div class="promo">
-      <div class="deal">
-      <%= render_slot(@inner_block) %>
-      </div>
-      <div class="expiration">
-      Deal expires in <%= @expiration %>
-      </div>
-      <div class="legal">
-        <%= render_slot(@legal) %>
-      </div>
-    </div>
-    """
+
   end
   def handle_event("filter", %{"type"=>type, "prices"=>prices}, socket) do
     filter = %{type: type, prices: prices}
